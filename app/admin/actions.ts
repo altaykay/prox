@@ -15,7 +15,9 @@ import type {
   AccountStatus, InvoiceStatus, ListingStatus, PhotoShootStatus, PlanType, ReportStatus, SubscriptionStatus, VerificationStatus,
 } from "@prisma/client";
 
-const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+// Longueurs maximales alignées sur les colonnes MySQL (VARCHAR 191 par défaut).
+const LONG: Record<string, number> = { description: 3000, notes: 5000, services: 1000, rates: 1000, hours: 1000, billingAddress: 500, message: 5000, resolution: 5000 };
+const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim().slice(0, LONG[k] ?? 191);
 const opt = (f: FormData, k: string) => s(f, k) || null;
 const bool = (f: FormData, k: string) => f.get(k) === "on";
 const list = (f: FormData, k: string) => f.getAll(k).map(String).filter(Boolean).join(",");
@@ -221,7 +223,7 @@ export async function savePlan(f: FormData) {
   const data = {
     name: s(f, "name"),
     type: s(f, "type") as PlanType,
-    description: s(f, "description"),
+    description: s(f, "description").slice(0, 1000),
     priceCents: toCents(f.get("price")),
     durationMonths: Math.max(1, Number(s(f, "durationMonths")) || 1),
     includesPhotoShoot: bool(f, "includesPhotoShoot"),

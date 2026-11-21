@@ -12,7 +12,9 @@ import { saveUpload } from "@/lib/uploads";
 import { deleteDocument, storeDocument } from "@/lib/vault";
 import { addMonths } from "@/lib/format";
 
-const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+// Longueurs maximales alignées sur les colonnes MySQL (VARCHAR 191 par défaut).
+const LONG: Record<string, number> = { description: 3000, notes: 5000, services: 1000, rates: 1000, hours: 1000, billingAddress: 500, message: 5000, resolution: 5000 };
+const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim().slice(0, LONG[k] ?? 191);
 const back = (q = "ok=1") => redirect(`/espace?${q}`);
 const BY = "par l'annonceuse";
 
