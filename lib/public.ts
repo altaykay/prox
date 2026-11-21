@@ -3,6 +3,7 @@ import { dayKey } from "./format";
 
 export const publicListingInclude = {
   photos: { where: { approved: true }, orderBy: { position: "asc" as const } },
+  account: { select: { isDemo: true } },
 };
 
 // Comptabilise les affichages dans les résultats (une écriture groupée par page).

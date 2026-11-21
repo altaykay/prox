@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { confirmAge } from "../site-actions";
+import { getSettings } from "@/lib/settings";
 
-export const metadata = { title: "Prox – accès réservé aux adultes" };
+export const metadata = { title: "Accès réservé aux adultes" };
 
 export default async function Gate({ searchParams }: { searchParams: Promise<{ suite?: string }> }) {
   const { suite } = await searchParams;
+  const s = await getSettings();
   return (
     <div className="gate" style={{ position: "fixed", inset: 0, zIndex: 50 }}>
       <div className="box">
-        <h1>Prox</h1>
-        <p>Ce site contient des annonces de massages érotiques destinées exclusivement aux adultes.</p>
+        <h1>{s.siteName}</h1>
+        <p style={{ whiteSpace: "pre-line" }}>{s.gateText}</p>
         <p>En entrant, vous confirmez avoir <strong>18 ans révolus</strong> et accepter les <Link href="/cgu" style={{ color: "#fff", textDecoration: "underline" }}>conditions d'utilisation</Link>.</p>
         <form action={confirmAge} style={{ display: "grid", gap: 10, marginTop: 22 }}>
           <input type="hidden" name="suite" value={suite ?? "/"} />

@@ -2,13 +2,14 @@ import Link from "next/link";
 import type { Listing, ListingPhoto } from "@prisma/client";
 import { CANTONS } from "@/lib/constants";
 
-export function ListingCard({ l }: { l: Listing & { photos: ListingPhoto[] } }) {
+export function ListingCard({ l }: { l: Listing & { photos: ListingPhoto[]; account?: { isDemo: boolean } } }) {
   const p = l.photos[0];
   return (
     <Link href={`/annonce/${l.id}`} className="lcard">
       <div className="ph">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {p ? <img src={p.url} alt={`Photo de ${l.pseudo}`} className={p.blurred ? "blur" : ""} loading="lazy" /> : l.pseudo.charAt(0)}
+        {l.account?.isDemo && <span className="badge demo-tag">Exemple</span>}
       </div>
       <div className="b">
         <div className="n">{l.pseudo}</div>

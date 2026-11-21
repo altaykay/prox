@@ -46,6 +46,7 @@ model Account {
   phone          String
   passwordHash   String?
   status         AccountStatus @default(PENDING_VERIFICATION)
+  isDemo         Boolean       @default(false) // compte d'exemple (ajouté / supprimé depuis /admin/parametres)
   // Coordonnées de facturation (utilisées seulement pour les factures d'abonnement)
   billingName    String?
   billingAddress String?       @db.VarChar(500)
@@ -115,9 +116,10 @@ model Listing {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  photos  ListingPhoto[]
-  stats   ListingStatDaily[]
-  reports Report[]
+  photos        ListingPhoto[]
+  stats         ListingStatDaily[]
+  reports       Report[]
+  conversations Conversation[]
 }
 
 enum PhotoSource {
@@ -284,4 +286,43 @@ model ModerationLog {
   createdAt  DateTime   @default(now())
 
   @@index([targetType, targetId])
+}
+
+// ───────────── Paramètres du site (modifiables depuis l'administration) ─────────────
+
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+// ───────────── Messagerie visiteur ↔ annonceuse ─────────────
+// Le visiteur n'a pas de compte : il accède à sa conversation grâce à un jeton secret (lien privé + cookie).
+
+model Conversation {
+  id            String    @id @default(cuid())
+  listingId     String
+  listing       Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  token         String    @unique
+  visitorName   String
+  ownerUnread   Int       @default(0)
+  visitorUnread Int       @default(0)
+  blocked       Boolean   @default(false) // bloquée par l'annonceuse : le visiteur ne peut plus écrire
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  messages Message[]
+
+  @@index([listingId, updatedAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  fromOwner      Boolean
+  body           String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
 }

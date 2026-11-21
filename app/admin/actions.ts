@@ -11,6 +11,8 @@ import { logAction } from "@/lib/log";
 import { addMonths, toCents } from "@/lib/format";
 import { saveUpload } from "@/lib/uploads";
 import { deleteDocument } from "@/lib/vault";
+import { getSettings, SETTING_KEYS, settingMaxLength, vatRateBp } from "@/lib/settings";
+import { createDemoData, deleteDemoData } from "@/lib/demo";
 import type {
   AccountStatus, InvoiceStatus, ListingStatus, PhotoShootStatus, PlanType, ReportStatus, SubscriptionStatus, VerificationStatus,
 } from "@prisma/client";
@@ -287,7 +289,7 @@ export async function createSubscription(f: FormData) {
       data: {
         number: await nextInvoiceNumber(), accountId, subscriptionId: sub.id,
         label: `${label} (${months} mois)`, amountCents: priceCents,
-        vatRateBp: Number(process.env.VAT_RATE_BP ?? 0),
+        vatRateBp: vatRateBp(await getSettings()),
         status: "SENT", dueDate: new Date(Date.now() + 30 * 86400000),
         ...(await billingFor(accountId)),
       },
@@ -332,7 +334,7 @@ export async function renewSubscription(f: FormData) {
       data: {
         number: await nextInvoiceNumber(), accountId: old.accountId, subscriptionId: sub.id,
         label: `${old.label} – renouvellement (${months} mois)`, amountCents: old.priceCents,
-        vatRateBp: Number(process.env.VAT_RATE_BP ?? 0), status: "SENT",
+        vatRateBp: vatRateBp(await getSettings()), status: "SENT",
         dueDate: new Date(Date.now() + 30 * 86400000), ...(await billingFor(old.accountId)),
       },
     });
@@ -425,4 +427,39 @@ export async function deleteAdmin(f: FormData) {
   const a = await db.adminUser.delete({ where: { id } });
   await logAction(me.sub, "Membre de l'équipe retiré", "admin", id, a.email);
   redirect("/admin/equipe?ok=1");
+}
+
+// ───────────── Paramètres du site ─────────────
+
+export async function saveSettings(f: FormData) {
+  const me = await requireAdmin({ role: "ADMIN" });
+  const changed: string[] = [];
+  const current = Object.fromEntries((await db.setting.findMany()).map((r) => [r.key, r.value]));
+  for (const key of SETTING_KEYS) {
+    if (!f.has(key)) continue;
+    const value = String(f.get(key) ?? "").replace(/\r/g, "").trim().slice(0, settingMaxLength(key));
+    if ((current[key] ?? "") === value) continue;
+    if (value) await db.setting.upsert({ where: { key }, update: { value }, create: { key, value } });
+    else await db.setting.deleteMany({ where: { key } });
+    changed.push(key);
+  }
+  if (changed.length) await logAction(me.sub, "Paramètres du site modifiés", "settings", "site", changed.join(", "));
+  revalidatePath("/", "layout");
+  redirect("/admin/parametres?ok=1");
+}
+
+export async function addDemoData() {
+  const me = await requireAdmin({ role: "ADMIN" });
+  const n = await createDemoData(db, me.sub);
+  if (n) await logAction(me.sub, "Données d'exemple ajoutées", "system", "demo", `${n} comptes`);
+  revalidatePath("/", "layout");
+  redirect("/admin/parametres?ok=1#exemples");
+}
+
+export async function removeDemoData() {
+  const me = await requireAdmin({ role: "ADMIN" });
+  const n = await deleteDemoData(db);
+  if (n) await logAction(me.sub, "Données d'exemple supprimées", "system", "demo", `${n} comptes`);
+  revalidatePath("/", "layout");
+  redirect("/admin/parametres?ok=supprime#exemples");
 }

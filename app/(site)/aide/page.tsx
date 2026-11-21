@@ -1,11 +1,16 @@
 import Link from "next/link";
+import { getSettings } from "@/lib/settings";
+import { RichText } from "@/components/RichText";
 
-export const metadata = { title: "Aide et sécurité – Prox" };
+export const metadata = { title: "Aide et sécurité" };
+export const dynamic = "force-dynamic";
 
-export default function Help() {
+export default async function Help() {
+  const s = await getSettings();
   return (
     <div className="prose">
       <h1>Aide et sécurité</h1>
+      {s.pageAide.trim() && <RichText text={s.pageAide} />}
       <div className="notice bad"><strong>Danger immédiat : police 117.</strong> Urgences médicales : 144.</div>
 
       <h2>Signes possibles de traite ou de contrainte</h2>
@@ -29,7 +34,7 @@ export default function Help() {
       <p className="small muted">Coordonnées à vérifier régulièrement.</p>
 
       <h2>Pour les annonceuses</h2>
-      <p>Prox est gratuit et ne prend aucune commission. Votre compte vous appartient : personne d'autre ne doit le gérer pour vous. Si quelqu'un vous y oblige, ou garde votre argent ou vos papiers, les associations ci-dessus peuvent vous aider, de façon confidentielle et gratuite.</p>
+      <p>{s.siteName} est gratuit et ne prend aucune commission. Votre compte vous appartient : personne d'autre ne doit le gérer pour vous. Si quelqu'un vous y oblige, ou garde votre argent ou vos papiers, les associations ci-dessus peuvent vous aider, de façon confidentielle et gratuite.</p>
     </div>
   );
 }
