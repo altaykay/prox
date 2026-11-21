@@ -1,0 +1,287 @@
+// Prox — modèle de données
+// Développement : SQLite. Production : passer provider à "postgresql".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── Équipe d'administration ─────────────
+
+enum AdminRole {
+  ADMIN
+  MODERATOR
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         AdminRole @default(MODERATOR)
+  createdAt    DateTime  @default(now())
+
+  logs                 ModerationLog[]
+  reviewedVerifications IdentityVerification[]
+  createdSubscriptions Subscription[]
+  handledReports       Report[]
+}
+
+// ───────────── Annonceuses ─────────────
+// Une annonce = une personne : un compte possède au plus une annonce (accountId unique sur Listing).
+
+enum AccountStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  SUSPENDED
+}
+
+model Account {
+  id             String        @id @default(cuid())
+  email          String        @unique
+  phone          String
+  passwordHash   String?
+  status         AccountStatus @default(PENDING_VERIFICATION)
+  // Coordonnées de facturation (utilisées seulement pour les factures d'abonnement)
+  billingName    String?
+  billingAddress String?
+  billingZip     String?
+  billingCity    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  listing       Listing?
+  verification  IdentityVerification?
+  subscriptions Subscription[]
+  invoices      Invoice[]
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Les pièces d'identité et selfies ne sont JAMAIS stockés dans cette base :
+// on ne garde qu'une référence opaque vers le coffre de documents séparé et chiffré.
+model IdentityVerification {
+  id                    String             @id @default(cuid())
+  accountId             String             @unique
+  account               Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  status                VerificationStatus @default(PENDING)
+  idDocumentRef         String?
+  selfieRef             String?
+  ageConfirmed          Boolean            @default(false)
+  cantonalRequired      Boolean            @default(false)
+  cantonalRegistrationRef String?
+  cantonalConfirmed     Boolean            @default(false)
+  notes                 String?
+  reviewedById          String?
+  reviewedBy            AdminUser?         @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt            DateTime?
+  createdAt             DateTime           @default(now())
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  PAUSED
+  SUSPENDED
+  REJECTED
+}
+
+model Listing {
+  id          String        @id @default(cuid())
+  accountId   String        @unique
+  account     Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  pseudo      String
+  phone       String
+  whatsapp    Boolean       @default(true)
+  canton      String
+  city        String
+  description String
+  services    String        @default("") // liste séparée par des virgules
+  rates       String        @default("")
+  hours       String        @default("")
+  languages   String        @default("") // codes séparés par des virgules : fr,de,it,en…
+  status      ListingStatus @default(PENDING_REVIEW)
+  highlighted Boolean       @default(false) // mise en avant liée à un abonnement
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  photos  ListingPhoto[]
+  stats   ListingStatDaily[]
+  reports Report[]
+}
+
+enum PhotoSource {
+  OWNER
+  STUDIO // photos réalisées par l'équipe Prox
+}
+
+model ListingPhoto {
+  id        String      @id @default(cuid())
+  listingId String
+  listing   Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  blurred   Boolean     @default(false)
+  approved  Boolean     @default(false)
+  source    PhotoSource @default(OWNER)
+  position  Int         @default(0)
+  createdAt DateTime    @default(now())
+}
+
+// Statistiques agrégées par jour, sans adresse IP ni identifiant de visiteur (nLPD).
+model ListingStatDaily {
+  id             String  @id @default(cuid())
+  listingId      String
+  listing        Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  day            String  // AAAA-MM-JJ
+  views          Int     @default(0)
+  phoneClicks    Int     @default(0)
+  whatsappClicks Int     @default(0)
+  impressions    Int     @default(0) // affichages dans les résultats de recherche
+
+  @@unique([listingId, day])
+  @@index([day])
+}
+
+// ───────────── Abonnements et factures ─────────────
+// L'annonce de base reste gratuite. Les abonnements sont des services optionnels.
+
+enum PlanType {
+  PHOTO   // inclut une séance photo réalisée par l'équipe
+  ANNUAL  // payé à l'année
+  CUSTOM  // créé à la main depuis l'administration
+}
+
+model Plan {
+  id               String   @id @default(cuid())
+  name             String
+  type             PlanType
+  description      String   @default("")
+  priceCents       Int
+  durationMonths   Int
+  includesPhotoShoot Boolean @default(false)
+  highlight        Boolean  @default(false) // met l'annonce en avant pendant l'abonnement
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+enum SubscriptionStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PhotoShootStatus {
+  NONE
+  TO_SCHEDULE
+  SCHEDULED
+  DONE
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  accountId        String
+  account          Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             Plan               @relation(fields: [planId], references: [id])
+  label            String             // nom figé au moment de la création
+  priceCents       Int                // prix figé (0 = offert)
+  status           SubscriptionStatus @default(PENDING_PAYMENT)
+  startDate        DateTime
+  endDate          DateTime
+  photoShootStatus PhotoShootStatus   @default(NONE)
+  photoShootDate   DateTime?
+  notes            String?
+  createdById      String?
+  createdBy        AdminUser?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime           @default(now())
+
+  invoices Invoice[]
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  number         String        @unique
+  accountId      String?
+  account        Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  label          String
+  amountCents    Int           // montant HT
+  vatRateBp      Int           @default(0) // TVA en points de base (810 = 8,1 %), 0 si non assujetti
+  status         InvoiceStatus @default(DRAFT)
+  issueDate      DateTime      @default(now())
+  dueDate        DateTime
+  paidAt         DateTime?
+  paymentMethod  String?
+  // Coordonnées figées au moment de l'émission
+  billingName    String
+  billingAddress String        @default("")
+  notes          String?
+  createdAt      DateTime      @default(now())
+}
+
+// ───────────── Sécurité ─────────────
+
+enum ReportReason {
+  TRAFFICKING   // soupçon de traite ou de contrainte
+  MINOR         // soupçon de personne mineure
+  THIRD_PARTY   // annonce gérée par un tiers
+  EXPLICIT      // contenu explicite
+  FAKE          // fausse annonce / arnaque
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  listingId    String?
+  listing      Listing?     @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  reason       ReportReason
+  message      String
+  contact      String?
+  status       ReportStatus @default(OPEN)
+  resolution   String?
+  handledById  String?
+  handledBy    AdminUser?   @relation(fields: [handledById], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+// Journal des actions : ajout uniquement, jamais modifié ni supprimé depuis l'interface.
+model ModerationLog {
+  id         String     @id @default(cuid())
+  adminId    String?
+  admin      AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action     String
+  targetType String
+  targetId   String
+  details    String     @default("")
+  createdAt  DateTime   @default(now())
+
+  @@index([targetType, targetId])
+}
