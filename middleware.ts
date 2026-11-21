@@ -23,4 +23,4 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/((?!_next/|api/|favicon|robots.txt).*)"] };
+export const config = { matcher: ["/((?!_next/|api/|uploads/|favicon|robots.txt).*)"] };

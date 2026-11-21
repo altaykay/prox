@@ -1,12 +1,12 @@
 // Prox — modèle de données
-// Développement : SQLite. Production : passer provider à "postgresql".
+// Base MySQL / MariaDB (hébergement Hostinger), en développement comme en production.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -48,7 +48,7 @@ model Account {
   status         AccountStatus @default(PENDING_VERIFICATION)
   // Coordonnées de facturation (utilisées seulement pour les factures d'abonnement)
   billingName    String?
-  billingAddress String?
+  billingAddress String?       @db.VarChar(500)
   billingZip     String?
   billingCity    String?
   createdAt      DateTime      @default(now())
@@ -79,7 +79,7 @@ model IdentityVerification {
   cantonalRequired      Boolean            @default(false)
   cantonalRegistrationRef String?
   cantonalConfirmed     Boolean            @default(false)
-  notes                 String?
+  notes                 String?            @db.Text
   reviewedById          String?
   reviewedBy            AdminUser?         @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt            DateTime?
@@ -104,10 +104,10 @@ model Listing {
   whatsapp    Boolean       @default(true)
   canton      String
   city        String
-  description String
-  services    String        @default("") // liste séparée par des virgules
-  rates       String        @default("")
-  hours       String        @default("")
+  description String        @db.Text
+  services    String        @default("") @db.VarChar(1000) // liste séparée par des virgules
+  rates       String        @default("") @db.VarChar(1000)
+  hours       String        @default("") @db.VarChar(1000)
   languages   String        @default("") // codes séparés par des virgules : fr,de,it,en…
   status      ListingStatus @default(PENDING_REVIEW)
   highlighted Boolean       @default(false) // mise en avant liée à un abonnement
@@ -129,7 +129,7 @@ model ListingPhoto {
   id        String      @id @default(cuid())
   listingId String
   listing   Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  url       String
+  url       String      @db.VarChar(500)
   blurred   Boolean     @default(false)
   approved  Boolean     @default(false)
   source    PhotoSource @default(OWNER)
@@ -165,7 +165,7 @@ model Plan {
   id               String   @id @default(cuid())
   name             String
   type             PlanType
-  description      String   @default("")
+  description      String   @default("") @db.VarChar(1000)
   priceCents       Int
   durationMonths   Int
   includesPhotoShoot Boolean @default(false)
@@ -203,7 +203,7 @@ model Subscription {
   endDate          DateTime
   photoShootStatus PhotoShootStatus   @default(NONE)
   photoShootDate   DateTime?
-  notes            String?
+  notes            String?            @db.Text
   createdById      String?
   createdBy        AdminUser?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt        DateTime           @default(now())
@@ -235,8 +235,8 @@ model Invoice {
   paymentMethod  String?
   // Coordonnées figées au moment de l'émission
   billingName    String
-  billingAddress String        @default("")
-  notes          String?
+  billingAddress String        @default("") @db.VarChar(500)
+  notes          String?       @db.Text
   createdAt      DateTime      @default(now())
 }
 
@@ -262,10 +262,10 @@ model Report {
   listingId    String?
   listing      Listing?     @relation(fields: [listingId], references: [id], onDelete: SetNull)
   reason       ReportReason
-  message      String
+  message      String       @db.Text
   contact      String?
   status       ReportStatus @default(OPEN)
-  resolution   String?
+  resolution   String?      @db.Text
   handledById  String?
   handledBy    AdminUser?   @relation(fields: [handledById], references: [id], onDelete: SetNull)
   createdAt    DateTime     @default(now())
@@ -280,7 +280,7 @@ model ModerationLog {
   action     String
   targetType String
   targetId   String
-  details    String     @default("")
+  details    String     @default("") @db.VarChar(2000)
   createdAt  DateTime   @default(now())
 
   @@index([targetType, targetId])

@@ -6,7 +6,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID }
 import { mkdir, readFile, writeFile, unlink } from "fs/promises";
 import path from "path";
 
-const dir = () => process.env.VAULT_DIR ?? path.join(process.cwd(), "storage", "vault");
+const dir = () => process.env.VAULT_DIR || path.join(process.cwd(), "storage", "vault");
 const key = () => {
   const k = process.env.VAULT_KEY;
   if (!k) throw new Error("VAULT_KEY manquante");

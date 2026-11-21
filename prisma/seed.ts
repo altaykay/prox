@@ -1,4 +1,5 @@
-// Données de démonstration. Lancer : npm run db:seed
+// Initialisation : compte admin + formules. Données de démonstration seulement avec SEED_DEMO=1.
+// Lancer : npm run db:seed
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -23,6 +24,7 @@ async function main() {
         description: "Abonnement créé à la main par l'administration (prix et durée libres, ou offert)." },
     ] });
   }
+  if (process.env.SEED_DEMO !== "1") { console.log("Admin et formules prêts (pas de données de démonstration : SEED_DEMO=1 pour en ajouter)."); return; }
   if ((await db.account.count()) > 0) { console.log("Données déjà présentes : seul l'admin a été vérifié."); return; }
 
   const demo = [

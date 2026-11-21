@@ -21,7 +21,7 @@ export async function submitReport(f: FormData) {
   const listingId = String(f.get("listingId") ?? "") || null;
   const exists = listingId ? await db.listing.findUnique({ where: { id: listingId }, select: { id: true } }) : null;
   const r = await db.report.create({
-    data: { reason: reason as ReportReason, message, contact: String(f.get("contact") ?? "").trim().slice(0, 200) || null, listingId: exists?.id ?? null },
+    data: { reason: reason as ReportReason, message, contact: String(f.get("contact") ?? "").trim().slice(0, 191) || null, listingId: exists?.id ?? null },
   });
   await logAction(null, "Signalement reçu", "report", r.id, reason);
   redirect("/signaler?merci=1");
