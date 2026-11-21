@@ -21,7 +21,7 @@ npm run dev                 # http://localhost:3000
 
 1. hPanel > Bases de données > MySQL : créer une base et un utilisateur, puis `DATABASE_URL="mysql://UTILISATEUR:MOT_DE_PASSE@localhost:3306/BASE"`.
 2. hPanel > Sites web > Créer un site > Application web Node.js > importer depuis GitHub (`altaykay/prox`, branche `main`).
-3. Réglages : framework Next.js, Node 20 ou 22, commande de build `npm run build:prod` (crée/met à jour les tables, crée l'admin et les formules, puis compile), démarrage `npm start`.
+3. Réglages : framework Next.js, Node 20 ou 22, commande de build `npm run build` (crée/met à jour les tables, crée l'admin et les formules via `scripts/db-setup.mjs`, puis compile ; `SKIP_DB_SETUP=1` pour compiler sans base), démarrage `npm start`.
 4. Variables d'environnement : celles de `.env.example`. Mettre `UPLOAD_DIR` et `VAULT_DIR` sur des dossiers hors du dossier de l'application pour que photos et pièces d'identité survivent aux redéploiements. Ne jamais mettre `SEED_DEMO=1` en production.
 5. Brancher le domaine et activer le SSL dans hPanel.
 
