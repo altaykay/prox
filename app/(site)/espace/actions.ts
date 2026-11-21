@@ -9,6 +9,7 @@ import { PRO_COOKIE, signPro } from "@/lib/session";
 import { requirePro } from "@/lib/pro";
 import { logAction } from "@/lib/log";
 import { saveUpload } from "@/lib/uploads";
+import { getSettings, vatRateBp } from "@/lib/settings";
 import { deleteDocument, storeDocument } from "@/lib/vault";
 import { addMonths } from "@/lib/format";
 
@@ -174,7 +175,7 @@ export async function requestPlan(f: FormData) {
   await db.invoice.create({
     data: {
       number, accountId: acc.id, subscriptionId: sub.id, label: `${plan!.name} (${plan!.durationMonths} mois)`, amountCents: plan!.priceCents,
-      vatRateBp: Number(process.env.VAT_RATE_BP ?? 0), status: "SENT", dueDate: new Date(Date.now() + 30 * 86400000),
+      vatRateBp: vatRateBp(await getSettings()), status: "SENT", dueDate: new Date(Date.now() + 30 * 86400000),
       billingName: acc.billingName || listing?.pseudo || acc.email,
       billingAddress: [acc.billingAddress, [acc.billingZip, acc.billingCity].filter(Boolean).join(" ")].filter(Boolean).join("\n"),
     },

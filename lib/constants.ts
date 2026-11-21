@@ -46,10 +46,4 @@ export const HELP_CONTACTS = [
   { name: "Plateforme Traite (ACT212) – ligne nationale", detail: "act212.ch" },
 ];
 
-// Coordonnées de l'émetteur des factures (à compléter)
-export const ISSUER = {
-  name: process.env.ISSUER_NAME ?? "Prox Sàrl (à compléter)",
-  address: process.env.ISSUER_ADDRESS ?? "Adresse à compléter, 1200 Genève",
-  iban: process.env.ISSUER_IBAN ?? "CH00 0000 0000 0000 0000 0",
-  vatNumber: process.env.ISSUER_VAT ?? "",
-};
+// Coordonnées de l'émetteur des factures : voir /admin/parametres (lib/settings.ts).

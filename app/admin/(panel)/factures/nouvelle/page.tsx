@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
 import { dayKey } from "@/lib/format";
 import { createInvoice } from "../../../actions";
+import { getSettings } from "@/lib/settings";
 
 export default async function NewInvoice({ searchParams }: { searchParams: Promise<{ compte?: string; abonnement?: string }> }) {
   const sp = await searchParams;
+  const site = await getSettings();
   const accounts = await db.account.findMany({ orderBy: { createdAt: "desc" }, include: { listing: true } });
   return (
     <>
@@ -19,7 +21,7 @@ export default async function NewInvoice({ searchParams }: { searchParams: Promi
         <label>Objet<input name="label" required placeholder="ex. Séance photo supplémentaire" /></label>
         <div className="fields cols-3">
           <label>Montant HT (CHF)<input name="amount" required inputMode="decimal" /></label>
-          <label>TVA (%)<input name="vatRate" inputMode="decimal" defaultValue={(Number(process.env.VAT_RATE_BP ?? 0) / 100).toString()} /></label>
+          <label>TVA (%)<input name="vatRate" inputMode="decimal" defaultValue={site.vatRate} /></label>
           <label>Échéance<input name="dueDate" type="date" defaultValue={dayKey(new Date(Date.now() + 30 * 86400000))} /></label>
         </div>
         <label>Notes (visibles sur la facture)<textarea name="notes" /></label>

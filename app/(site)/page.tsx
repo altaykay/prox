@@ -4,11 +4,13 @@ import { CANTONS, LANGUAGES } from "@/lib/constants";
 import { countImpressions, publicListingInclude } from "@/lib/public";
 import { expireSubscriptions } from "@/lib/subscriptions";
 import { ListingCard } from "@/components/ListingCard";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ canton?: string; ville?: string; langue?: string }> }) {
   const sp = await searchParams;
+  const s = await getSettings();
   await expireSubscriptions();
   const where: Prisma.ListingWhereInput = { status: "PUBLISHED", account: { status: "VERIFIED" } };
   if (sp.canton && CANTONS[sp.canton]) where.canton = sp.canton;
@@ -25,8 +27,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   return (
     <>
       <section className="hero">
-        <h1>Massages en Suisse, en toute discrétion</h1>
-        <p className="muted" style={{ margin: 0 }}>Masseuses indépendantes et majeures, identité vérifiée avant chaque publication.</p>
+        <h1>{s.heroTitle}</h1>
+        <p className="muted" style={{ margin: 0 }}>{s.heroSubtitle}</p>
       </section>
       <form className="search" role="search">
         <select name="canton" defaultValue={sp.canton ?? ""} aria-label="Canton">

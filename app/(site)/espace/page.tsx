@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requirePro } from "@/lib/pro";
-import { CANTONS_WITH_REGISTRATION, INVOICE_STATUS, ISSUER, LISTING_STATUS, PLAN_TYPE, SUB_STATUS } from "@/lib/constants";
+import { CANTONS_WITH_REGISTRATION, INVOICE_STATUS, LISTING_STATUS, PLAN_TYPE, SUB_STATUS } from "@/lib/constants";
 import { chf, date, invoiceTotal, pct } from "@/lib/format";
 import { sinceKey } from "@/lib/stats";
 import { Badge } from "@/components/ui";
 import { ListingFields } from "@/components/ListingFields";
+import { getSettings } from "@/lib/settings";
 import {
   addMyPhoto, deleteMyAccount, deleteMyListing, deleteMyPhoto, proLogout, requestPlan, saveMyBilling, saveMyListing, submitVerification, toggleMyPause,
 } from "./actions";
@@ -22,6 +23,7 @@ const ERR: Record<string, string> = {
 export default async function ProDashboard({ searchParams }: { searchParams: Promise<{ ok?: string; erreur?: string }> }) {
   const sp = await searchParams;
   const me = await requirePro();
+  const site = await getSettings();
   const [v, l, subs, invoices, plans] = await Promise.all([
     db.identityVerification.findUnique({ where: { accountId: me.id } }),
     db.listing.findUnique({ where: { accountId: me.id }, include: { photos: { orderBy: { position: "asc" } } } }),
@@ -29,6 +31,7 @@ export default async function ProDashboard({ searchParams }: { searchParams: Pro
     db.invoice.findMany({ where: { accountId: me.id }, orderBy: { issueDate: "desc" } }),
     db.plan.findMany({ where: { active: true, type: { not: "CUSTOM" } }, orderBy: { priceCents: "asc" } }),
   ]);
+  const unread = l ? await db.conversation.aggregate({ where: { listingId: l.id }, _sum: { ownerUnread: true } }) : null;
   const stats = l ? await db.listingStatDaily.aggregate({
     where: { listingId: l.id, day: { gte: sinceKey(30) } }, _sum: { views: true, phoneClicks: true, whatsappClicks: true, impressions: true },
   }) : null;
@@ -43,7 +46,10 @@ export default async function ProDashboard({ searchParams }: { searchParams: Pro
     <>
       <div className="page-head">
         <h1>Mon espace</h1>
-        <form action={proLogout}><button className="btn small">Déconnexion</button></form>
+        <div style={{ display: "flex", gap: 8 }}>
+          {l && <Link className="btn small" href="/espace/messages">Messages{(unread?._sum.ownerUnread ?? 0) > 0 && ` (${unread?._sum.ownerUnread})`}</Link>}
+          <form action={proLogout}><button className="btn small">Déconnexion</button></form>
+        </div>
       </div>
       {sp.erreur && <div className="notice bad">{ERR[sp.erreur] ?? "Une erreur est survenue."}</div>}
       {sp.ok === "abonnement" && <div className="notice">Demande enregistrée. La facture est ci-dessous ; l'abonnement démarre dès réception du paiement.</div>}
@@ -148,7 +154,7 @@ export default async function ProDashboard({ searchParams }: { searchParams: Pro
             <table><tbody>{invoices.map((i) => (
               <tr key={i.id}><td>{i.number}<div className="small muted">{i.label}</div></td><td className="num">{chf(invoiceTotal(i.amountCents, i.vatRateBp))}</td><td><Badge value={i.status} labels={INVOICE_STATUS} /></td><td className="small">échéance {date(i.dueDate)}</td></tr>
             ))}</tbody></table>
-            <p className="small muted">Paiement par virement : IBAN {ISSUER.iban}, référence = numéro de facture.</p>
+            <p className="small muted">Paiement par virement : IBAN {site.issuerIban || "communiqué sur la facture"}, référence = numéro de facture.</p>
           </>
         )}
       </section>

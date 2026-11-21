@@ -168,3 +168,17 @@ details.danger-zone summary { cursor: pointer; color: var(--bad); font-size: .9r
 .step.done .dot { background: var(--ok); color: #fff; }
 .step.now .dot { background: var(--accent); color: #fff; }
 @media (max-width: 899px) { .hide-mobile { display: none; } }
+
+/* Annonces d'exemple */
+.lcard .ph { position: relative; }
+.demo-tag { position: absolute; top: 8px; left: 8px; background: rgba(255,255,255,.92); color: var(--ink); }
+
+/* Messagerie */
+.chat { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 16px; }
+.bubble { max-width: 80%; padding: 8px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble.me { align-self: flex-end; background: var(--accent-soft); border-color: transparent; }
+.bubble .t { display: block; font-size: .72rem; color: var(--muted); margin-top: 4px; }
+.conv-list { list-style: none; padding: 0; margin: 0; }
+.conv-list li { border-bottom: 1px solid var(--line); }
+.conv-list a { display: flex; justify-content: space-between; gap: 12px; padding: 12px 4px; color: var(--ink); }
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

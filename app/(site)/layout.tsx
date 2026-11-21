@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { getSettings } from "@/lib/settings";
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  const s = await getSettings();
   return (
     <>
       <header className="site-header">
         <div className="in">
-          <Link href="/" className="brand">Prox</Link>
+          <Link href="/" className="brand">{s.siteName}</Link>
           <nav>
+            <Link href="/messages">Messages</Link>
             <Link href="/espace">Espace annonceuse</Link>
             <Link href="/aide">Aide &amp; sécurité</Link>
           </nav>
@@ -22,7 +25,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <Link href="/confidentialite">Confidentialité</Link>
             <Link href="/mentions-legales">Mentions légales</Link>
           </nav>
-          <p style={{ margin: 0 }}>Annonces gratuites de masseuses majeures et indépendantes, vérifiées avant publication. Aucune commission sur les prestations. Réservé aux personnes de 18 ans et plus.</p>
+          <p style={{ margin: 0, whiteSpace: "pre-line" }}>{s.footerText}</p>
           <p style={{ margin: 0 }}>Victime ou témoin de traite ou de contrainte ? Police : <strong>117</strong> · <Link href="/aide">contacts d'aide</Link></p>
         </div>
       </footer>

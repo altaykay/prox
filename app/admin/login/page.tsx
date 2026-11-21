@@ -1,11 +1,13 @@
 import { login } from "../actions";
+import { getSettings } from "@/lib/settings";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ erreur?: string }> }) {
   const { erreur } = await searchParams;
+  const s = await getSettings();
   return (
     <main className="login">
       <div className="card">
-        <h1>Prox <span className="muted small">administration</span></h1>
+        <h1>{s.siteName} <span className="muted small">administration</span></h1>
         {erreur && <div className="notice bad">Identifiants incorrects.</div>}
         <form action={login} className="stack">
           <label>E-mail<input name="email" type="email" required autoComplete="username" /></label>

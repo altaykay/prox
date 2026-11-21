@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { INVOICE_STATUS, ISSUER } from "@/lib/constants";
+import { INVOICE_STATUS } from "@/lib/constants";
+import { getSettings } from "@/lib/settings";
 import { chf, date, dayKey, invoiceTotal } from "@/lib/format";
 import { Badge, Notice } from "@/components/ui";
 import { setInvoiceStatus } from "../../../actions";
@@ -12,6 +13,7 @@ export default async function InvoiceDetail({ params, searchParams }: {
 }) {
   const { id } = await params;
   const sp = await searchParams;
+  const site = await getSettings();
   const i = await db.invoice.findUnique({ where: { id }, include: { subscription: true } });
   if (!i) notFound();
   const vat = invoiceTotal(i.amountCents, i.vatRateBp) - i.amountCents;
@@ -51,7 +53,7 @@ export default async function InvoiceDetail({ params, searchParams }: {
 
       <article className="invoice-doc">
         <div className="head">
-          <div><h2 style={{ fontSize: "1.6rem" }}>Prox</h2><div className="small" style={{ whiteSpace: "pre-line" }}>{ISSUER.name}{"\n"}{ISSUER.address}{ISSUER.vatNumber && `\nTVA ${ISSUER.vatNumber}`}</div></div>
+          <div><h2 style={{ fontSize: "1.6rem" }}>{site.siteName}</h2><div className="small" style={{ whiteSpace: "pre-line" }}>{site.issuerName || "Raison sociale à compléter (Paramètres)"}{"\n"}{site.issuerAddress}{site.issuerIde && `\nIDE ${site.issuerIde}`}{site.issuerVat && `\nTVA ${site.issuerVat}`}{site.siteDomain && `\n${site.siteDomain}`}</div></div>
           <div className="small" style={{ whiteSpace: "pre-line" }}><strong>{i.billingName}</strong>{"\n"}{i.billingAddress}</div>
         </div>
         <h2>Facture {i.number}</h2>
@@ -67,8 +69,8 @@ export default async function InvoiceDetail({ params, searchParams }: {
           </tbody>
         </table>
         {i.notes && <p className="small" style={{ marginTop: 16 }}>{i.notes}</p>}
-        <p className="small" style={{ marginTop: 24 }}>Paiement par virement sur l'IBAN {ISSUER.iban}, en indiquant la référence {i.number}.</p>
-        <p className="small muted">Libellé neutre sur les relevés : « Prox – services en ligne ».</p>
+        <p className="small" style={{ marginTop: 24 }}>Paiement par virement sur l'IBAN {site.issuerIban || "(à compléter dans Paramètres)"}, en indiquant la référence {i.number}.</p>
+        <p className="small muted">Libellé neutre sur les relevés : « {site.siteName} – services en ligne ».</p>
       </article>
     </>
   );
