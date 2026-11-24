@@ -8,15 +8,17 @@ import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ canton?: string; ville?: string; langue?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ canton?: string; ville?: string; langue?: string | string[] }> }) {
   const sp = await searchParams;
+  // Plusieurs langues possibles (?langue=fr&langue=en) : on garde les annonces qui parlent au moins une d'entre elles.
+  const langues = [...new Set([sp.langue ?? []].flat())].filter((k) => LANGUAGES[k]);
   const s = await getSettings();
   await expireSubscriptions();
   const where: Prisma.ListingWhereInput = { status: "PUBLISHED", account: { status: "VERIFIED" } };
   if (sp.canton && CANTONS[sp.canton]) where.canton = sp.canton;
   if (sp.ville) where.city = { contains: sp.ville.trim() };
-  if (sp.langue && LANGUAGES[sp.langue]) where.languages = { contains: sp.langue };
-  const searching = !!(sp.canton || sp.ville || sp.langue);
+  if (langues.length) where.OR = langues.map((k) => ({ languages: { contains: k } }));
+  const searching = !!(sp.canton || sp.ville || langues.length);
 
   const listings = await db.listing.findMany({
     where, include: publicListingInclude, orderBy: [{ highlighted: "desc" }, { publishedAt: "desc" }], take: 60,
@@ -37,10 +39,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         </select>
         <input name="ville" list="villes" defaultValue={sp.ville ?? ""} placeholder="Ville" aria-label="Ville" />
         <datalist id="villes">{cities.map((c) => <option key={c.city} value={c.city} />)}</datalist>
-        <select name="langue" defaultValue={sp.langue ?? ""} aria-label="Langue" className="full">
-          <option value="">Toutes les langues</option>
-          {Object.entries(LANGUAGES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
+        <fieldset className="langs">
+          <legend className="muted small">Langues (une ou plusieurs)</legend>
+          <div className="chips">
+            {Object.entries(LANGUAGES).map(([k, v]) => (
+              <label key={k} className="chip-check">
+                <input type="checkbox" name="langue" value={k} defaultChecked={langues.includes(k)} />
+                <span>{v}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <button className="btn primary full" style={{ justifyContent: "center" }}>Rechercher</button>
       </form>
 

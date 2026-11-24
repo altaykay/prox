@@ -128,7 +128,14 @@ details.danger-zone summary { cursor: pointer; color: var(--bad); font-size: .9r
 @media (min-width: 720px) { .hero h1 { font-size: 2.2rem; } }
 .search { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin: 14px 0 22px; }
 .search .full { grid-column: 1 / -1; }
-@media (min-width: 720px) { .search { grid-template-columns: 1fr 1fr 1fr auto; } .search .full { grid-column: auto; } }
+@media (min-width: 720px) { .search { grid-template-columns: 1fr 1fr auto; } .search .full { grid-column: auto; } .search .langs { order: 5; } }
+.search .langs { grid-column: 1 / -1; border: 0; padding: 0; margin: 2px 0 0; min-width: 0; }
+.search .langs legend { padding: 0; margin-bottom: 6px; }
+.chip-check { position: relative; cursor: pointer; }
+.chip-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip-check span { display: inline-block; border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-size: .85rem; background: #fff; color: var(--ink); }
+.chip-check input:checked + span { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip-check input:focus-visible + span { outline: 2px solid var(--ink); outline-offset: 2px; }
 .cards { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 720px) { .cards { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1000px) { .cards { grid-template-columns: repeat(4, 1fr); } }
