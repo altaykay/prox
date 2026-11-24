@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { CANTONS, LANGUAGES } from "@/lib/constants";
+import { CANTONS, LANGUAGES, MAIN_LANGUAGES } from "@/lib/constants";
 import { countImpressions, publicListingInclude } from "@/lib/public";
 import { expireSubscriptions } from "@/lib/subscriptions";
 import { ListingCard } from "@/components/ListingCard";
@@ -25,6 +25,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   });
   const cities = await db.listing.findMany({ where: { status: "PUBLISHED", ...(sp.canton ? { canton: sp.canton } : {}) }, distinct: ["city"], select: { city: true }, orderBy: { city: "asc" } });
   await countImpressions(listings.map((l) => l.id));
+  const langChip = (k: string) => (
+    <label key={k} className="chip-check">
+      <input type="checkbox" name="langue" value={k} defaultChecked={langues.includes(k)} />
+      <span>{LANGUAGES[k]}</span>
+    </label>
+  );
 
   return (
     <>
@@ -43,13 +49,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <fieldset className="langs">
           <legend className="muted small">Langues (une ou plusieurs)</legend>
           <div className="chips">
-            {Object.entries(LANGUAGES).map(([k, v]) => (
-              <label key={k} className="chip-check">
-                <input type="checkbox" name="langue" value={k} defaultChecked={langues.includes(k)} />
-                <span>{v}</span>
-              </label>
-            ))}
+            {MAIN_LANGUAGES.map((k) => langChip(k))}
           </div>
+          <details className="more-langs" open={langues.some((k) => !MAIN_LANGUAGES.includes(k))}>
+            <summary className="small">Plus de langues</summary>
+            <div className="chips">
+              {Object.keys(LANGUAGES).filter((k) => !MAIN_LANGUAGES.includes(k)).map((k) => langChip(k))}
+            </div>
+          </details>
         </fieldset>
         <button className="btn primary full" style={{ justifyContent: "center" }}>Rechercher</button>
       </form>

@@ -135,6 +135,8 @@ details.danger-zone summary { cursor: pointer; color: var(--bad); font-size: .9r
 .search .langs { grid-column: 1 / -1; border: 0; padding: 0; margin: 2px 0 0; min-width: 0; }
 .search .langs legend { padding: 0; margin-bottom: 6px; }
 .chip-check { position: relative; cursor: pointer; }
+.more-langs { margin-top: 8px; }
+.more-langs summary { cursor: pointer; color: var(--accent); margin-bottom: 8px; }
 .chip-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .chip-check span { display: inline-block; border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-size: .85rem; background: #fff; color: var(--ink); }
 .chip-check input:checked + span { background: var(--ink); color: #fff; border-color: var(--ink); }

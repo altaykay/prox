@@ -9,9 +9,15 @@ export const CANTONS: Record<string, string> = {
 // À vérifier et tenir à jour avec un conseil juridique : les règles changent.
 export const CANTONS_WITH_REGISTRATION = ["GE", "VD", "NE", "FR", "VS", "JU", "TI", "BE"];
 
+// Codes ISO à 2 lettres, stockés séparés par des virgules dans Listing.languages.
+// Les 8 premières (MAIN_LANGUAGES) s'affichent directement dans la recherche, les autres sous « Plus de langues ».
 export const LANGUAGES: Record<string, string> = {
   fr: "Français", de: "Allemand", it: "Italien", en: "Anglais", es: "Espagnol", pt: "Portugais", ru: "Russe", ro: "Roumain",
+  sq: "Albanais", ar: "Arabe", bg: "Bulgare", zh: "Chinois", hr: "Croate", el: "Grec", hu: "Hongrois", ja: "Japonais",
+  nl: "Néerlandais", fa: "Persan", pl: "Polonais", sr: "Serbe", sk: "Slovaque", sv: "Suédois", cs: "Tchèque", th: "Thaï",
+  tr: "Turc", uk: "Ukrainien", vi: "Vietnamien",
 };
+export const MAIN_LANGUAGES = ["fr", "de", "it", "en", "es", "pt", "ru", "ro"];
 
 export const LISTING_STATUS: Record<string, string> = {
   DRAFT: "Brouillon", PENDING_REVIEW: "En attente", PUBLISHED: "Publiée", PAUSED: "En pause", SUSPENDED: "Suspendue", REJECTED: "Refusée",
