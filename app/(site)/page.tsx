@@ -29,6 +29,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   return (
     <>
       <section className="hero">
+        <span className="hero-credit">Photo d'illustration</span>
         <h1>{s.heroTitle}</h1>
         <p className="muted" style={{ margin: 0 }}>{s.heroSubtitle}</p>
       </section>

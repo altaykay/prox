@@ -127,6 +127,7 @@ details.danger-zone summary { cursor: pointer; color: var(--bad); font-size: .9r
   background: linear-gradient(180deg, rgba(31,26,28,.05) 30%, rgba(31,26,28,.78) 100%), url("/img/fond-accueil.jpg") 58% 25% / cover no-repeat var(--ink); }
 .hero h1 { font-size: 1.7rem; margin-bottom: .2em; color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.35); }
 .hero .muted { color: #ffffffd9; }
+.hero-credit { position: absolute; top: 10px; right: 12px; font-size: .7rem; color: #fff; background: rgba(31,26,28,.45); padding: 2px 8px; border-radius: 99px; }
 @media (min-width: 720px) { .hero { min-height: 380px; padding: 32px 30px; background-position: 50% 30%; } .hero h1 { font-size: 2.2rem; } }
 .search { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin: 14px 0 22px; }
 .search .full { grid-column: 1 / -1; }
